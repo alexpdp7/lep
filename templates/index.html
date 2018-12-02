@@ -1,0 +1,15 @@
+<html>
+ <head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+ </head>
+ <body>
+  <ul>
+   {% for article in articles %}
+    <li>
+     ({{ article.section }})
+     <a href="{{ article.href }}">{{ article.text }}</a>
+    </li>
+   {% endfor %}
+  </ul>
+ </body>
+</html>
