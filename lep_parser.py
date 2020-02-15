@@ -7,7 +7,7 @@ def get_front_page_articles():
 
 
 def _get_html():
-    return urllib.request.urlopen("https://elpais.com").read().decode('utf-8')
+    return urllib.request.urlopen("https://elpais.com").read().decode("utf-8")
 
 
 def _parse(content):
@@ -37,11 +37,10 @@ class _HTMLParser(parser.HTMLParser):
         self.listener = listener
 
     def handle_starttag(self, tag, attrs):
-        if tag == 'a':
-            href = dict(attrs)['href']
-            if href.count('/') == 6 and 'redirector' not in href and href[0] == '/':
+        if tag == "a":
+            href = dict(attrs)["href"]
+            if href.count("/") == 6 and "redirector" not in href and href[0] == "/":
                 self.current_article = href
-            
 
     def handle_endtag(self, tag):
         self.current_article = None
