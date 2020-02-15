@@ -12,7 +12,7 @@
    {% for article in articles %}
     <li>
      ({{ article.section }})
-     <a href="{{ article.href }}">{{ article.text }}</a>
+     <a href="https://elpais.com{{ article.url }}">{{ article.text }}</a>
     </li>
    {% endfor %}
   </ul>
