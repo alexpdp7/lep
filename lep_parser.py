@@ -1,61 +1,62 @@
+from html import parser
 import urllib
-
-import pyquery
-from importlib.resources import path
 
 
 def get_front_page_articles():
-    return _articles(_load_front_page())
+    return _parse(_get_html())
 
 
-def _load_front_page():
-    return pyquery.PyQuery('https://elpais.com')
+def _get_html():
+    return urllib.request.urlopen("https://elpais.com").read().decode('utf-8')
 
 
-class Link:
-    def __init__(self, py_query):
-        self.py_query = py_query
+def _parse(content):
+    parser = _HTMLParser()
+    listener = _ArticleListener()
+    parser.set_listener(lambda url, text: listener.listen(url, text))
+    parser.feed(content)
+    return listener.articles
+
+
+class _ArticleListener:
+    def __init__(self):
+        self._articles = dict()
+
+    def listen(self, url, text):
+        texts = self._articles.get(url, [])
+        texts.append(text)
+        self._articles[url] = texts
 
     @property
-    def is_article(self):
-        return self.py_query.attr.href.count('/') == 8
+    def articles(self):
+        return [Article(url, texts) for url, texts in self._articles.items()]
 
-    @property
-    def path(self):
-        return urllib.parse.urlparse(self.py_query.attr.href).path
+
+class _HTMLParser(parser.HTMLParser):
+    def set_listener(self, listener):
+        self.listener = listener
+
+    def handle_starttag(self, tag, attrs):
+        if tag == 'a':
+            href = dict(attrs)['href']
+            if href.count('/') == 6 and 'redirector' not in href and href[0] == '/':
+                self.current_article = href
+            
+
+    def handle_endtag(self, tag):
+        self.current_article = None
+
+    def handle_data(self, data):
+        if hasattr(self, "current_article") and self.current_article:
+            self.listener(self.current_article, data)
 
 
 class Article:
-    def __init__(self, path, page_py_query):
-        self.path = path
-        self.page_py_query = page_py_query
+    def __init__(self, url, texts):
+        self.url = url
+        self.text = " ".join(texts)
+        _, section1, _, _, _, section2, _ = url.split("/")
+        self.section = f"{section1} - {section2}"
 
-    @property
-    def _links(self):
-        return [pyquery.PyQuery(link) for link in self.page_py_query('a[href*="{0}"]'.format(self.path))]
-
-    @property
-    def text(self):
-        return ' '.join([link.text() for link in self._links]).strip() or '???'
-
-    @property
-    def section(self):
-        parts = self.path.split('/')
-        return '{0} - {1}'.format(parts[1], parts[5])
-
-    @property
-    def href(self):
-        return 'https://elpais.com{0}'.format(self.path)
-
-
-def _all_links(page):
-    return [Link(pyquery.PyQuery(link)) for link in page('a[href^="https://elpais.com/"]')]
-
-def _article_links(page):
-    return [link for link in _all_links(page) if link.is_article]
-
-def _deduped_paths(page):
-    return list(set([link.path for link in _article_links(page)]))
-
-def _articles(page):
-    return [Article(path, page) for path in _deduped_paths(page)]
+    def __repr__(self):
+        return repr(self.__dict__)

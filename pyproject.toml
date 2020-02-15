@@ -6,7 +6,6 @@ authors = ["Your Name <you@example.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.7"
-pyquery = "^1.4"
 Flask = {version = "^1.1.1",extras = ["web"]}
 
 [tool.poetry.dev-dependencies]
