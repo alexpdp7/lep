@@ -39,7 +39,12 @@ class _HTMLParser(parser.HTMLParser):
     def handle_starttag(self, tag, attrs):
         if tag == "a":
             href = dict(attrs)["href"]
-            if href.count("/") == 6 and "redirector" not in href and href[0] == "/":
+            if (
+                href.count("/") in (3, 6)
+                and "redirector" not in href
+                and href[0] == "/"
+                and href.endswith(".html")
+            ):
                 self.current_article = href
 
     def handle_endtag(self, tag):
@@ -54,8 +59,11 @@ class Article:
     def __init__(self, url, texts):
         self.url = url
         self.text = " ".join(texts)
-        _, section1, _, _, _, section2, _ = url.split("/")
-        self.section = f"{section1} - {section2}"
+        if url.count("/") == 6:
+            _, section1, _, _, _, section2, _ = url.split("/")
+            self.section = f"{section1} - {section2}"
+        else:
+            self.section = url.split("/")[1]
 
     def __repr__(self):
         return repr(self.__dict__)
